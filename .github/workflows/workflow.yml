@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # 允许手动触发工作流程
   push: # 当代码推送到仓库时触发工作流程
     tags:
-      - v*
+      - '*'
 
 jobs:
   build:
