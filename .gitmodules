@@ -1,0 +1,12 @@
+[submodule "modules/nginx"]
+	path = modules/nginx
+	url = https://github.com/nginx/nginx.git
+[submodule "modules/ModSecurity"]
+	path = modules/ModSecurity
+	url = https://github.com/owasp-modsecurity/ModSecurity.git
+[submodule "modules/ModSecurity-nginx"]
+	path = modules/ModSecurity-nginx
+	url = https://github.com/owasp-modsecurity/ModSecurity-nginx.git
+[submodule "modules/ssdeep"]
+	path = modules/ssdeep
+	url = https://github.com/ssdeep-project/ssdeep.git
