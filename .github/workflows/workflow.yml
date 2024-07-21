@@ -31,26 +31,19 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
 
-      - name: Build and Export Docker Image
-        run: |
-          docker version
-          docker info
-          docker buildx version
-          docker buildx create --use
-          docker buildx build --file ./Dockerfile --platform ${{ matrix.platform }} --tag ${{ github.event.repository.name }}:${{ github.ref_name }}-${{ matrix.arch }} --output type=docker,dest=${{ github.event.repository.name }}-${{ matrix.arch }}.tar --no-cache --pull .
-          ls -lh ${{ github.event.repository.name }}-${{ matrix.arch }}.tar
+      - name: Convert repository name
+        run: echo "repository_name=$(echo ${GITHUB_REPOSITORY#*/} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-#      - name: Build Docker image
-#        uses: docker/build-push-action@v6
-#        with:
-#          no-cache: true # 禁用缓存
-#          platforms: ${{ matrix.platform }} # 构建多平台镜像
-#          pull: true # 确保使用最新的基础镜像
-#          provenance: mode=min
-#          outputs: type=docker,dest=./${{ github.event.repository.name }}-${{ matrix.arch }}.tar
-#          context: .
-#          file: ./Dockerfile
-#          tags: ${{ github.event.repository.name }}:${{ github.ref_name }}-${{ matrix.arch }}
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+         no-cache: true # 禁用缓存
+         platforms: ${{ matrix.platform }} # 构建多平台镜像
+         pull: true # 确保使用最新的基础镜像
+         outputs: type=docker,dest=${{ github.event.repository.name }}-${{ matrix.arch }}.tar
+         context: .
+         file: ./Dockerfile
+         tags: ${{ env.repository_name }}:${{ github.ref_name }}-${{ matrix.arch }}
 
       - name: Compress Docker image
         run: |
@@ -64,3 +57,43 @@ jobs:
           path: ${{ github.event.repository.name }}-${{ matrix.arch }}.tar.gz
           retention-days: 12 # 保留 12 天
           compression-level: 0 # 压缩级别 0
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions: 
+      contents: write
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          path: artifacts
+          merge-multiple: true
+          pattern: ${{ github.event.repository.name }}-${{ github.ref_name }}_*
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            Release of version ${{ github.ref_name }}.
+          draft: false # 是否为草稿
+          prerelease: false # 是否为预发行版本
+
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          for file in artifacts/*; do
+            gh release upload ${{ github.ref_name }} "$file" --clobber
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
