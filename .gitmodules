@@ -7,3 +7,6 @@
 [submodule "modules/ModSecurity-nginx"]
 	path = modules/ModSecurity-nginx
 	url = https://github.com/owasp-modsecurity/ModSecurity-nginx.git
+[submodule "modules/ssdeep"]
+	path = modules/ssdeep
+	url = https://github.com/ssdeep-project/ssdeep.git
