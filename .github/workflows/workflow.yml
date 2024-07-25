@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive' # 检出子模块
+          submodules: 'recursive' # 递归检出子模块
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -43,7 +43,7 @@ jobs:
          outputs: type=docker,dest=${{ github.event.repository.name }}-${{ matrix.arch }}.tar
          context: .
          file: ./Dockerfile
-         tags: ${{ env.repository_name }}:${{ github.ref_name }}-${{ matrix.arch }}
+         tags: ${{ env.repository_name }}:${{ github.ref_name }}
 
       - name: Compress Docker image
         run: |
