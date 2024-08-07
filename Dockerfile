@@ -1,13 +1,24 @@
 FROM alpine:3.20 AS builder
 
 # 安装编译所需的依赖
-RUN apk add --no-cache autoconf automake libtool build-base git yajl-dev geoip-dev libmaxminddb-dev lmdb-dev lua5.4-dev curl-dev libxml2-dev pcre2-dev linux-headers openssl-dev gd-dev
+RUN apk add --no-cache autoconf automake libtool build-base git yajl-dev geoip-dev libmaxminddb-dev lmdb-dev lua5.4-dev curl-dev libxml2-dev pcre2-dev linux-headers openssl-dev gd-dev cmake
 
 # 复制源码到 Docker 镜像
 COPY ../modules/ssdeep /tmp/ssdeep
 COPY ../modules/ModSecurity /tmp/ModSecurity
 COPY ../modules/nginx /tmp/nginx
 COPY ../modules/ModSecurity-nginx /tmp/ModSecurity-nginx
+COPY ../modules/ngx_brotli /tmp/ngx_brotli
+
+# 编译ngx_brotli
+WORKDIR /tmp/ngx_brotli/deps/brotli
+RUN mkdir out
+WORKDIR /tmp/ngx_brotli/deps/brotli/out
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_C_FLAGS="-Ofast -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+    -DCMAKE_CXX_FLAGS="-Ofast -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+    -DCMAKE_INSTALL_PREFIX=./installed ..
+RUN cmake --build . --config Release --target brotlienc
 
 # 编译 ModSecurity 依赖
 WORKDIR /tmp/ssdeep
@@ -42,6 +53,7 @@ RUN ./auto/configure \
     --with-stream_geoip_module \
     --with-stream_ssl_preread_module \
     --add-module=/tmp/ModSecurity-nginx \
+    --add-module=/tmp/ngx_brotli \
     --with-cc-opt='-O3'
 RUN make -j$(nproc) && make install
 

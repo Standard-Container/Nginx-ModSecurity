@@ -10,3 +10,6 @@
 [submodule "modules/ssdeep"]
 	path = modules/ssdeep
 	url = https://github.com/ssdeep-project/ssdeep.git
+[submodule "modules/ngx_brotli"]
+	path = modules/ngx_brotli
+	url = https://github.com/google/ngx_brotli.git
