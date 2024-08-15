@@ -33,6 +33,9 @@ RUN ./bootstrap && ./configure CFLAGS="-O3" && make -j$(nproc) && make install
 WORKDIR /tmp/ModSecurity
 RUN ./build.sh && ./configure --with-pcre2 --with-lmdb CFLAGS="-O3" && make -j$(nproc) && make install
 
+ENV LUAJIT_LIB=/usr/lib
+ENV LUAJIT_INC=/usr/include/luajit-2.1
+
 # 编译 Nginx
 WORKDIR /tmp/nginx
 RUN ./auto/configure \
